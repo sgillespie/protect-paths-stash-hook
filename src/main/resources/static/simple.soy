@@ -1,0 +1,68 @@
+{namespace com.github.sgillespie.stash.hook}
+
+/**
+ * Configuration for restrict paths hook
+ *
+ * @param config
+ * @param? errors
+ */
+{template .config}
+    {call aui.form.textareaField}
+        {param id: 'pathPatterns'/}
+        {param value: $config['pathPatterns'] /}
+        {param isRequired: true /}
+        {param labelContent}
+            {stash_i18n('com.github.sgillespie.hook.pathPatterns.label', 'Path Patterns')}
+        {/param}
+        {param descriptionText}
+            {stash_i18n('com.github.sgillespie.hook.pathPatterns.description',
+                        'Regular expressions of filesystem paths to protect. Whitespace seperated')}
+        {/param}
+        {param errorTexts: $errors ? $errors['pathPatterns'] : null /}
+        {param extraClasses: 'long'/}
+    {/call}
+
+    {call aui.form.selectField}
+        {param id: 'filterType'/}
+        {param labelContent}
+            {stash_i18n('com.github.sgillespie.hook.filterType.label', 'Filter Branches By')}
+        {/param}
+        {param descriptionText}
+            {stash_i18n('com.github.sgillespie.hook.filterType.description',
+                        'The type of filter to match branches to protect')}
+        {/param}
+        {param options: [
+            ['text' : 'All Branches', 'value' : 'ALL', 'selected' : $config['filterType'] == 'ALL'],
+            ['text' : 'Include Branches', 'value' : 'INCLUDE', 'selected' : $config['filterType'] == 'INCLUDE'],
+            ['text' : 'Exclude Branches', 'value' : 'EXCLUDE', 'selected' : $config['filterType'] == 'EXCLUDE']
+         ] /}
+    {/call}
+
+    {call aui.form.textField}
+        {param id: 'branchFilter'/}
+        {param value: $config['branchFilter']/}
+        {param isRequired: false/}
+        {param labelContent}
+            {stash_i18n('com.github.sgillespie.hook.branchFilter.label', 'Branches')}
+        {/param}
+        {param descriptionText}
+            {stash_i18n('com.github.sgillespie.hook.branchFilter.description',
+                        'Branches to protect. Whitespace seperated. Regular expressions accepted.')}
+        {/param}
+        {param errorTexts: $errors ? $errors['branchFilter'] : null /}
+    {/call}
+
+    {call aui.form.textField}
+        {param id: 'excludeUsers'/}
+        {param value: $config['branches']/}
+        {param isRequired: false/}
+        {param labelContent}
+            {stash_i18n('com.github.sgillespie.hook.excludeUsers.label', 'Exclude Users')}
+        {/param}
+        {param descriptionText}
+            {stash_i18n('com.github.sgillespie.hook.excludeUsers.description',
+                        'Users to exclude.  Whitespace seperated.')}
+        {/param}
+        {param errorTexts: $errors ? $errors['excludeUsers'] : null/}
+    {/call}
+{/template}

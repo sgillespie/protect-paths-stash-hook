@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+  <plugin-info>
+    <description>${project.description}</description>
+    <version>${project.version}</version>
+    <vendor name="${project.organization.name}" url="${project.organization.url}"/>
+    <param name="plugin-icon">images/pluginIcon.png</param>
+    <param name="plugin-logo">images/pluginLogo.png</param>
+  </plugin-info>
+
+  <resource type="i18n" name="i18n" location="restrict-paths-hook"/>
+
+  <component-import key="applicationProperties"
+                    interface="com.atlassian.sal.api.ApplicationProperties"/>
+  <component-import key="commitService"
+                    interface="com.atlassian.stash.commit.CommitService"/>
+  <component-import key="permissionService"
+                    interface="com.atlassian.stash.user.PermissionService"/>
+
+  <repository-hook name="Restrict Paths Repository Hook"
+                   i18n-name-key="restrict-paths-repository-hook.name"
+                   key="restrict-paths-repository-hook"
+                   class="com.github.sgillespie.hook.RestrictPathsRepositoryHook">
+      <description key="restrict-paths-repository-hook.description">Disables changes to specific paths for non-administrators</description>
+      <config-form name="Restrict Paths Repository Hook" key="restrictPathsConfig">
+          <view>com.github.sgillespie.stash.hook.config</view>
+          <directory location="static"/>
+      </config-form>
+  </repository-hook>
+
+</atlassian-plugin>
