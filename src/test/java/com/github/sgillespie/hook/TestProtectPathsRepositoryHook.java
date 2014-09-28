@@ -15,16 +15,11 @@ import com.atlassian.stash.user.StashUser;
 import com.atlassian.stash.util.Page;
 import com.atlassian.stash.util.PageImpl;
 import com.atlassian.stash.util.PageRequest;
-import com.github.sgillespie.hook.RestrictPathsRepositoryHook;
-import org.hamcrest.core.Is;
-import org.hamcrest.core.IsEqual;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openqa.selenium.lift.WebDriverTestContext;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,7 +28,6 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -42,8 +36,8 @@ import static org.mockito.Mockito.when;
 /**
  * Created by sgillespie on 9/19/14.
  */
-public class TestRestrictPathsRepositoryHook {
-    private RestrictPathsRepositoryHook restrictPathsRepositoryHook;
+public class TestProtectPathsRepositoryHook {
+    private ProtectPathsRepositoryHook protectPathsRepositoryHook;
     private StringWriter hookResponseErr;
 
     @Mock
@@ -85,25 +79,25 @@ public class TestRestrictPathsRepositoryHook {
 
         Changeset changeSet = mock(Changeset.class);
         when(changeSet.getId()).thenReturn("CHANGESET-ID");
-        Page<Changeset> changeSets = new PageImpl<Changeset>(RestrictPathsRepositoryHook.PAGE_REQUEST,
+        Page<Changeset> changeSets = new PageImpl<Changeset>(ProtectPathsRepositoryHook.PAGE_REQUEST,
                 1, asList(changeSet), true);
         when(commitService.getChangesetsBetween((ChangesetsBetweenRequest) Matchers.anyObject(),
                 (PageRequest) Matchers.anyObject())).thenReturn(changeSets);
 
         DetailedChangeset detailedChangeset = mock(DetailedChangeset.class);
         Page<DetailedChangeset> detailedChangesets = new PageImpl<DetailedChangeset>(
-                RestrictPathsRepositoryHook.PAGE_REQUEST, 1, asList(detailedChangeset), true);
+                ProtectPathsRepositoryHook.PAGE_REQUEST, 1, asList(detailedChangeset), true);
         when(commitService.getDetailedChangesets((DetailedChangesetsRequest) Matchers.anyObject(),
                 (PageRequest) Matchers.anyObject())).thenReturn(detailedChangesets);
 
         when(change.getPath()).thenReturn(new SimplePath("x/y/z"));
-        Page<Change> changes = new PageImpl<Change>(RestrictPathsRepositoryHook.PAGE_REQUEST, 1, asList(change), true);
+        Page<Change> changes = new PageImpl<Change>(ProtectPathsRepositoryHook.PAGE_REQUEST, 1, asList(change), true);
         when((Page<Change>) detailedChangeset.getChanges()).thenReturn(changes);
 
         hookResponseErr = new StringWriter();
         when(hookResponse.err()).thenReturn(new PrintWriter(hookResponseErr));
 
-        restrictPathsRepositoryHook = new RestrictPathsRepositoryHook(
+        protectPathsRepositoryHook = new ProtectPathsRepositoryHook(
                 commitService, permissionService, stashAuthenticationContext);
     }
 
@@ -211,7 +205,7 @@ public class TestRestrictPathsRepositoryHook {
                 .thenReturn(isAdministrator);
         when(change.getPath()).thenReturn(new SimplePath(path));
 
-        return restrictPathsRepositoryHook.onReceive(repositoryHookContext,
+        return protectPathsRepositoryHook.onReceive(repositoryHookContext,
                 asList(refChange), hookResponse);
     }
 }

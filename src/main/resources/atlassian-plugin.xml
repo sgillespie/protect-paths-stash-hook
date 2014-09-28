@@ -21,7 +21,7 @@
   <repository-hook name="Restrict Paths Repository Hook"
                    i18n-name-key="restrict-paths-repository-hook.name"
                    key="restrict-paths-repository-hook"
-                   class="com.github.sgillespie.hook.RestrictPathsRepositoryHook">
+                   class="com.github.sgillespie.hook.ProtectPathsRepositoryHook">
       <description key="restrict-paths-repository-hook.description">Disables changes to specific paths for non-administrators</description>
       <config-form name="Restrict Paths Repository Hook" key="restrictPathsConfig">
           <view>com.github.sgillespie.stash.hook.config</view>

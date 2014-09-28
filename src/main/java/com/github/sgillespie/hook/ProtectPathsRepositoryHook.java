@@ -7,7 +7,9 @@ import com.atlassian.stash.hook.repository.PreReceiveRepositoryHook;
 import com.atlassian.stash.hook.repository.RepositoryHookContext;
 import com.atlassian.stash.repository.RefChange;
 import com.atlassian.stash.repository.Repository;
+import com.atlassian.stash.setting.RepositorySettingsValidator;
 import com.atlassian.stash.setting.Settings;
+import com.atlassian.stash.setting.SettingsValidationErrors;
 import com.atlassian.stash.user.Permission;
 import com.atlassian.stash.user.PermissionService;
 import com.atlassian.stash.user.StashAuthenticationContext;
@@ -26,16 +28,16 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class RestrictPathsRepositoryHook implements PreReceiveRepositoryHook {
+public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
     public static final PageRequest PAGE_REQUEST = new PageRequestImpl(0, PageRequest.MAX_PAGE_LIMIT);
 
     private final CommitService commitService;
     private final PermissionService permissionService;
     private final StashAuthenticationContext stashAuthenticationContext;
 
-    public RestrictPathsRepositoryHook(CommitService commitService,
-                                       PermissionService permissionService,
-                                       StashAuthenticationContext stashAuthenticationContext) {
+    public ProtectPathsRepositoryHook(CommitService commitService,
+                                      PermissionService permissionService,
+                                      StashAuthenticationContext stashAuthenticationContext) {
         this.commitService = commitService;
         this.permissionService = permissionService;
         this.stashAuthenticationContext = stashAuthenticationContext;
