@@ -27,6 +27,6 @@
           <view>com.github.sgillespie.stash.hook.config</view>
           <directory location="static"/>
       </config-form>
+      <validator>com.github.sgillespie.hook.ProtectPathsSettingsValidator</validator>
   </repository-hook>
-
 </atlassian-plugin>
