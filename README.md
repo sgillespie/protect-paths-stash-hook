@@ -1,6 +1,6 @@
 # Protect Paths Hook
 
-Protects specific filesystem paths from being pushed by non-administrators (for projects)
+A plugin for Atlassian Stash that protects paths from being pushed by non-administrators (for projects).
 
 ## Configuration
 
