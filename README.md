@@ -1,4 +1,5 @@
 # Protect Paths Hook
+[![Build Status](https://travis-ci.org/sgillespie/protect-paths-stash-hook.svg?branch=master)](https://travis-ci.org/sgillespie/protect-paths-stash-hook)
 
 A plugin for Atlassian Stash that protects paths from being pushed by non-administrators (for projects).
 
