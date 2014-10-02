@@ -7,10 +7,10 @@
     <version>0.9.0-SNAPSHOT</version>
     <organization>
         <name>Sean Gillespie</name>
-        <url>https://bitbucket.org/sgillespie/</url>
+        <url>https://github.com/sgillespie/</url>
     </organization>
-    <name>restrict-paths-hook</name>
-    <description>A plugin for Atlassian Stash that restricts paths from being updated</description>
+    <name>protect-paths-stash-hook</name>
+    <description>A plugin for Atlassian Stash that protects paths from being pushed by non-administrators (for projects).</description>
     <packaging>atlassian-plugin</packaging>
 
     <dependencyManagement>
