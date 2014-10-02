@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.sgillespie</groupId>
     <artifactId>protect-paths-stash-hooks</artifactId>
-    <version>0.5.0</version>
+    <version>0.9.0-SNAPSHOT</version>
     <organization>
         <name>Sean Gillespie</name>
         <url>https://bitbucket.org/sgillespie/</url>
