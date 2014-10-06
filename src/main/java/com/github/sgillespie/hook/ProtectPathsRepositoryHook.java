@@ -5,11 +5,12 @@ import com.atlassian.stash.content.*;
 import com.atlassian.stash.hook.HookResponse;
 import com.atlassian.stash.hook.repository.PreReceiveRepositoryHook;
 import com.atlassian.stash.hook.repository.RepositoryHookContext;
+import com.atlassian.stash.hook.repository.RepositoryMergeRequestCheck;
+import com.atlassian.stash.hook.repository.RepositoryMergeRequestCheckContext;
+import com.atlassian.stash.pull.PullRequestRef;
 import com.atlassian.stash.repository.RefChange;
 import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.setting.RepositorySettingsValidator;
 import com.atlassian.stash.setting.Settings;
-import com.atlassian.stash.setting.SettingsValidationErrors;
 import com.atlassian.stash.user.Permission;
 import com.atlassian.stash.user.PermissionService;
 import com.atlassian.stash.user.StashAuthenticationContext;
@@ -22,13 +23,13 @@ import com.google.common.base.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
+public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
+        RepositoryMergeRequestCheck {
+
     public static final PageRequest PAGE_REQUEST = new PageRequestImpl(0, PageRequest.MAX_PAGE_LIMIT);
 
     private final CommitService commitService;
@@ -66,10 +67,8 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
         Settings settings = context.getSettings();
 
         // Admins and excluded users
-        Boolean isExcludedUser = isExcludedUser(settings, stashAuthenticationContext.getCurrentUser());
-        if (isRepoAdmin(repository) || isExcludedUser) {
+        if (shouldExcludeUser(settings, repository, stashAuthenticationContext.getCurrentUser()))
             return true;
-        }
 
         // Get protected paths
         String[] pathRegexps = settings.getString("restrictedPaths", "").split("\\s+");
@@ -78,7 +77,7 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
         for (RefChange refChange : refChanges) {
             if (!shouldIncludeBranch(settings, refChange.getRefId())) continue;
 
-            Page<Changeset> changeSets = findNewChangeSets(repository, refChange);
+            Page<Changeset> changeSets = findNewChangeSets(repository, refChange.getFromHash(), refChange.getToHash());
             Page<DetailedChangeset> detailedChangesets = getDetailedChangesets(repository, changeSets);
 
             for (DetailedChangeset detailedChangeset : detailedChangesets.getValues()) {
@@ -99,15 +98,62 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
         return true;
     }
 
+    @Override
+    public void check(@Nonnull RepositoryMergeRequestCheckContext context) {
+        Repository repository = context
+                .getMergeRequest()
+                .getPullRequest()
+                .getFromRef()
+                .getRepository();
+        Settings settings = context.getSettings();
+
+        // Admins and excluded users
+        if (shouldExcludeUser(settings, repository, stashAuthenticationContext.getCurrentUser())) return;
+
+        // Get protected paths
+        String[] pathRegexps = settings.getString("restrictedPaths", "").split("\\s+");
+
+        PullRequestRef fromRef = context.getMergeRequest().getPullRequest().getFromRef();
+        PullRequestRef toRef = context.getMergeRequest().getPullRequest().getToRef();
+
+        if (shouldIncludeBranch(settings, toRef.getId())) {
+            Page<Changeset> changesets = findNewChangeSets(repository, toRef.getLatestChangeset(),
+                    fromRef.getLatestChangeset());
+            Page<DetailedChangeset> detailedChangesets = getDetailedChangesets(repository, changesets);
+
+            for (DetailedChangeset detailedChangeset : detailedChangesets.getValues()) {
+                // Validate the paths
+                Page<Path> paths = detailedChangeset.getChanges().transform(CHANGE_TO_PATH);
+                for (Path path : paths.getValues()) {
+                    for (String regexp : pathRegexps) {
+                        if (path.toString().toString().matches(regexp)) {
+                            context.getMergeRequest().veto("Cannot merge protected to path",
+                                    "Cannot merge to protect paths");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private boolean isRepoAdmin(Repository repository) {
         return permissionService.hasRepositoryPermission(repository, Permission.REPO_ADMIN);
     }
 
-    private boolean isExcludedUser(Settings settings, StashUser user) {
+    /**
+     * Returns true if the user is an administrator or an excluded user
+     *
+     * @param settings the hook settings
+     * @param user the currently logged in user
+     * @return true if the user is an administrator or an excluded user
+     */
+    private boolean shouldExcludeUser(Settings settings, Repository repository, StashUser user) {
+        Boolean isRepoAdmin = permissionService.hasRepositoryPermission(repository, Permission.REPO_ADMIN);
         String[] excludedUsers = settings
                 .getString("excludedUsers", "")
                 .split("\\s+");
-            return asList(excludedUsers).contains(user.getName());
+
+        return isRepoAdmin || asList(excludedUsers).contains(user.getName());
     }
 
     private Boolean shouldIncludeBranch(Settings settings, String refId) {
@@ -128,10 +174,10 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
         }
     }
 
-    private Page<Changeset> findNewChangeSets(Repository repository, RefChange refChange) {
+    private Page<Changeset> findNewChangeSets(Repository repository, String fromHash, String toHash) {
         ChangesetsBetweenRequest changesetsBetweenRequest = new ChangesetsBetweenRequest.Builder(repository)
-                .exclude(refChange.getFromHash())
-                .include(refChange.getToHash())
+                .exclude(fromHash)
+                .include(toHash)
                 .build();
         return commitService.getChangesetsBetween(changesetsBetweenRequest, PAGE_REQUEST);
     }
@@ -160,4 +206,6 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook {
 
         return false;
     }
+
+
 }
