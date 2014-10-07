@@ -154,14 +154,14 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminUserShouldNotBeAbleToPushToRestrictedPaths() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
         assertThat(canPush(false, "z/y/x"), is(Boolean.FALSE));
     }
 
     @Test
     public void nonAdminUserShouldNotBeAbleToMergeRestrictedPaths() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         merge(false, "x/y/z");
         merge(false, "z/y/x");
         verify(mergeRequest, times(2)).veto(anyString(), anyString());
@@ -169,14 +169,14 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void adminUserShouldBeAbleToPushToRestrictedPaths() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         assertThat(canPush(true, "x/y/z"), is(Boolean.TRUE));
         assertThat(canPush(true, "z/y/x"), is(Boolean.TRUE));
     }
 
     @Test
     public void adminUserShouldBeAbleToMergeRestrictedPaths() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         merge(true, "x/y/z");
         merge(true, "z/y/z");
         verify(mergeRequest, never()).veto(anyString(), anyString());
@@ -184,7 +184,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldNotBeAbleToPushAllFilter() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
         assertThat(canPush(false, "z/y/x"), is(Boolean.FALSE));
@@ -192,7 +192,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldNotBeAbleToMergeAllFilter() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
         merge(false, "x/y/z");
         merge(false, "z/y/x");
@@ -201,7 +201,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldNotBeAbleToPushToIncludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(refChange.getRefId()).thenReturn("refs/heads/branch-2");
@@ -212,7 +212,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldNotBeAbleToMergeToIncludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-2");
@@ -225,7 +225,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldBeAbleToPushToNotIncludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(refChange.getRefId()).thenReturn("refs/heads/branch-3");
@@ -236,7 +236,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldBeAbleToMergeNotIncludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-3");
@@ -249,7 +249,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldBeAbleToPushToExcludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(refChange.getRefId()).thenReturn("refs/heads/branch-1");
@@ -260,7 +260,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldBeAbleToMergeExcludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-1");
@@ -273,7 +273,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldNotBeAbleToPushToNotExcludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(refChange.getRefId()).thenReturn("refs/heads/branch-3");
@@ -284,7 +284,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void nonAdminShouldNotBeNotAbleToMergeExcludedBranch() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
         when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-3");
@@ -297,7 +297,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void excludedUserShouldBeAbleToPushRestrictedPaths() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
         when(settings.getString(eq("excludedUsers"), anyString())).thenReturn("excluded-user-1 excluded-user-2");
         when(user.getName()).thenReturn("excluded-user-1");
@@ -308,7 +308,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void excludedUserShouldBeAbleToMergeRestrictedPaths() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
         when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
         when(settings.getString(eq("excludedUsers"), anyString())).thenReturn("excluded-user-1 excluded-user-2");
         when(user.getName()).thenReturn("excluded-user-1");
@@ -321,7 +321,7 @@ public class TestProtectPathsRepositoryHook {
 
     @Test
     public void failedPushShouldContainErrorMessage() {
-        when(settings.getString(eq("restrictedPaths"), anyString())).thenReturn("x/y/z");
+        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z");
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
         assertThat(hookResponseErr.toString().length() == 0, equalTo(Boolean.FALSE));
