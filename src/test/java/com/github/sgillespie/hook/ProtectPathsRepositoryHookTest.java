@@ -46,7 +46,7 @@ import static org.mockito.Mockito.*;
 /**
  * Created by sgillespie on 9/19/14.
  */
-public class TestProtectPathsRepositoryHook {
+public class ProtectPathsRepositoryHookTest {
     private ProtectPathsRepositoryHook protectPathsRepositoryHook;
     private StringWriter hookResponseErr;
 
