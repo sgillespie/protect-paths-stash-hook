@@ -23,6 +23,7 @@ import com.google.common.base.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 
 import static java.util.Arrays.asList;
@@ -77,9 +78,8 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
         for (RefChange refChange : refChanges) {
             if (!shouldIncludeBranch(settings, refChange.getRefId())) continue;
 
-            Page<Changeset> changeSets = findNewChangeSets(repository, refChange.getFromHash(), refChange.getToHash());
-            Page<DetailedChangeset> detailedChangesets = getDetailedChangesets(repository, changeSets);
-
+            Page<DetailedChangeset> detailedChangesets = findDetailedChangeSets(
+                    repository, refChange.getFromHash(), refChange.getToHash());
             for (DetailedChangeset detailedChangeset : detailedChangesets.getValues()) {
                 // Validate the paths
                 Page<Path> paths = detailedChangeset.getChanges().transform(CHANGE_TO_PATH);
@@ -117,9 +117,8 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
         PullRequestRef toRef = context.getMergeRequest().getPullRequest().getToRef();
 
         if (shouldIncludeBranch(settings, toRef.getId())) {
-            Page<Changeset> changesets = findNewChangeSets(repository, toRef.getLatestChangeset(),
+            Page<DetailedChangeset> detailedChangesets = findDetailedChangeSets(repository, toRef.getLatestChangeset(),
                     fromRef.getLatestChangeset());
-            Page<DetailedChangeset> detailedChangesets = getDetailedChangesets(repository, changesets);
 
             for (DetailedChangeset detailedChangeset : detailedChangesets.getValues()) {
                 // Validate the paths
@@ -127,8 +126,7 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
                 for (Path path : paths.getValues()) {
                     for (String regexp : pathRegexps) {
                         if (path.toString().toString().matches(regexp)) {
-                            context.getMergeRequest().veto("Cannot merge protected to path",
-                                    "Cannot merge to protect paths");
+                            context.getMergeRequest().veto("Protected Paths!", getErrorMessages(toRef.getDisplayId()));
                         }
                     }
                 }
@@ -174,6 +172,10 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
         }
     }
 
+    private Page<DetailedChangeset> findDetailedChangeSets(Repository repository, String fromHash, String toHash) {
+        return getDetailedChangesets(repository, findNewChangeSets(repository, fromHash, toHash));
+    }
+
     private Page<Changeset> findNewChangeSets(Repository repository, String fromHash, String toHash) {
         ChangesetsBetweenRequest changesetsBetweenRequest = new ChangesetsBetweenRequest.Builder(repository)
                 .exclude(fromHash)
@@ -192,6 +194,13 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
         return commitService.getDetailedChangesets(detailedChangesetsRequest, PAGE_REQUEST);
     }
 
+    private String getErrorMessages(String branch) {
+        StringWriter writer = new StringWriter();
+        printErrorMessages(new PrintWriter(writer), branch);
+
+        return writer.toString();
+    }
+
     private void printErrorMessages(PrintWriter writer, String branch) {
         writer.println("Push rejected!");
         writer.println();
@@ -206,6 +215,4 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
 
         return false;
     }
-
-
 }
