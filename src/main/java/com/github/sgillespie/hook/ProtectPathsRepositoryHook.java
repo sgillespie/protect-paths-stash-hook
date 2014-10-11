@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
-
-import static java.util.Arrays.asList;
+import java.util.List;
 
 public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
         RepositoryMergeRequestCheck {
@@ -36,13 +35,16 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
     private final CommitService commitService;
     private final PermissionService permissionService;
     private final StashAuthenticationContext stashAuthenticationContext;
+    private final SettingsFactoryService settingsFactoryService;
 
     public ProtectPathsRepositoryHook(CommitService commitService,
                                       PermissionService permissionService,
-                                      StashAuthenticationContext stashAuthenticationContext) {
+                                      StashAuthenticationContext stashAuthenticationContext,
+                                      SettingsFactoryService settingsFactoryService) {
         this.commitService = commitService;
         this.permissionService = permissionService;
         this.stashAuthenticationContext = stashAuthenticationContext;
+        this.settingsFactoryService = settingsFactoryService;
     }
 
     public static final Function<Changeset, String> CHANGESET_TO_ID =
@@ -72,7 +74,7 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
             return true;
 
         // Get protected paths
-        String[] pathRegexps = settings.getString("pathPatterns", "").split("\\s+");
+        List<String> pathRegexps = settingsFactoryService.getPathPatterns(settings);
 
         // Loop over the new changes
         for (RefChange refChange : refChanges) {
@@ -111,7 +113,7 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
         if (shouldExcludeUser(settings, repository, stashAuthenticationContext.getCurrentUser())) return;
 
         // Get protected paths
-        String[] pathRegexps = settings.getString("pathPatterns", "").split("\\s+");
+        List<String> pathRegexps = settingsFactoryService.getPathPatterns(settings);
 
         PullRequestRef fromRef = context.getMergeRequest().getPullRequest().getFromRef();
         PullRequestRef toRef = context.getMergeRequest().getPullRequest().getToRef();
@@ -147,26 +149,22 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
      */
     private boolean shouldExcludeUser(Settings settings, Repository repository, StashUser user) {
         Boolean isRepoAdmin = permissionService.hasRepositoryPermission(repository, Permission.REPO_ADMIN);
-        String[] excludedUsers = settings
-                .getString("excludedUsers", "")
-                .split("\\s+");
+        Boolean isExcluded = settingsFactoryService.getExcludedUsers(settings).contains(user.getName());
 
-        return isRepoAdmin || asList(excludedUsers).contains(user.getName());
+        return isRepoAdmin || isExcluded;
     }
 
     private Boolean shouldIncludeBranch(Settings settings, String refId) {
-        FilterType filterType = FilterType.valueOf(settings.getString("filterType", "ALL"));
-        String[] branchRegexps = settings
-                .getString("branchFilter", "master")
-                .split("\\s+");
+        FilterType filterType = settingsFactoryService.getFilterType(settings);
+        List<String> branchPatterns = settingsFactoryService.getBranchFilters(settings);
 
         switch (filterType) {
             case ALL:
                 return true;
             case INCLUDE:
-                return matchesBranch(asList(branchRegexps), refId);
+                return matchesBranch(branchPatterns, refId);
             case EXCLUDE:
-                return !matchesBranch(asList(branchRegexps), refId);
+                return !matchesBranch(branchPatterns, refId);
             default:
                 return null;
         }

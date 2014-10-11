@@ -17,6 +17,11 @@
                     interface="com.atlassian.stash.commit.CommitService"/>
   <component-import key="permissionService"
                     interface="com.atlassian.stash.user.PermissionService"/>
+  <component key="settingsFactoryService"
+             class="com.github.sgillespie.hook.SettingsFactoryServiceImpl"
+             public="false">
+      <interface>com.github.sgillespie.hook.SettingsFactoryService</interface>
+  </component>
 
   <repository-hook name="Protect Paths Repository Hook"
                    i18n-name-key="protect-paths-repository-hook.name"

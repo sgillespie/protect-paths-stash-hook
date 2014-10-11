@@ -20,19 +20,14 @@ import com.atlassian.stash.user.StashUser;
 import com.atlassian.stash.util.Page;
 import com.atlassian.stash.util.PageImpl;
 import com.atlassian.stash.util.PageRequest;
-import org.hamcrest.core.IsEqual;
-import org.hamcrest.core.IsNot;
-import org.hamcrest.text.IsEmptyString;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.matchers.Not;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
@@ -67,7 +62,7 @@ public class ProtectPathsRepositoryHookTest {
     @Mock
     private Change change;
     @Mock
-    private Settings settings;
+    private SettingsFactoryService settingsFactoryService;
     @Mock
     private RepositoryMergeRequestCheckContext mergeRequestCheckContext;
     @Mock
@@ -91,9 +86,7 @@ public class ProtectPathsRepositoryHookTest {
         when(refChange.getToHash()).thenReturn("TO-HASH");
         when(refChange.getRefId()).thenReturn("refs/heads/master");
 
-        when(repositoryHookContext.getSettings()).thenReturn(settings);
-        when(settings.getString(anyString(), anyString())).thenReturn("");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
+        when(settingsFactoryService.getFilterType((Settings) anyObject())).thenReturn(FilterType.ALL);
 
         Changeset changeSet = mock(Changeset.class);
         when(changeSet.getId()).thenReturn("CHANGESET-ID");
@@ -116,7 +109,6 @@ public class ProtectPathsRepositoryHookTest {
         when(hookResponse.err()).thenReturn(new PrintWriter(hookResponseErr));
 
         when(mergeRequestCheckContext.getMergeRequest()).thenReturn(mergeRequest);
-        when(mergeRequestCheckContext.getSettings()).thenReturn(settings);
         PullRequest pullRequest = mock(PullRequest.class);
         when(mergeRequest.getPullRequest()).thenReturn(pullRequest);
         when(pullRequest.getFromRef()).thenReturn(pullRequestFromRef);
@@ -127,7 +119,7 @@ public class ProtectPathsRepositoryHookTest {
         when(pullRequestFromRef.getLatestChangeset()).thenReturn("TO-HASH");
 
         protectPathsRepositoryHook = new ProtectPathsRepositoryHook(
-                commitService, permissionService, stashAuthenticationContext);
+                commitService, permissionService, stashAuthenticationContext, settingsFactoryService);
     }
 
     @Test
@@ -154,14 +146,14 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminUserShouldNotBeAbleToPushToRestrictedPaths() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
         assertThat(canPush(false, "z/y/x"), is(Boolean.FALSE));
     }
 
     @Test
     public void nonAdminUserShouldNotBeAbleToMergeRestrictedPaths() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
         merge(false, "x/y/z");
         merge(false, "z/y/x");
         verify(mergeRequest, times(2)).veto(anyString(), anyString());
@@ -169,14 +161,14 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void adminUserShouldBeAbleToPushToRestrictedPaths() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
         assertThat(canPush(true, "x/y/z"), is(Boolean.TRUE));
         assertThat(canPush(true, "z/y/x"), is(Boolean.TRUE));
     }
 
     @Test
     public void adminUserShouldBeAbleToMergeRestrictedPaths() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
         merge(true, "x/y/z");
         merge(true, "z/y/z");
         verify(mergeRequest, never()).veto(anyString(), anyString());
@@ -184,16 +176,16 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldNotBeAbleToPushAllFilter() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.ALL);
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
         assertThat(canPush(false, "z/y/x"), is(Boolean.FALSE));
     }
 
     @Test
     public void nonAdminShouldNotBeAbleToMergeAllFilter() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.ALL);
         merge(false, "x/y/z");
         merge(false, "z/y/x");
         verify(mergeRequest, times(2)).veto(anyString(), anyString());
@@ -201,9 +193,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldNotBeAbleToPushToIncludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.INCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(refChange.getRefId()).thenReturn("refs/heads/branch-2");
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
@@ -212,9 +205,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldNotBeAbleToMergeToIncludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.INCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-2");
 
         merge(false, "x/y/z");
@@ -225,9 +219,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldBeAbleToPushToNotIncludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.INCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(refChange.getRefId()).thenReturn("refs/heads/branch-3");
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.TRUE));
@@ -236,9 +231,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldBeAbleToMergeNotIncludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("INCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.INCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-3");
 
         merge(false, "x/y/z");
@@ -249,9 +245,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldBeAbleToPushToExcludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.EXCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(refChange.getRefId()).thenReturn("refs/heads/branch-1");
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.TRUE));
@@ -260,9 +257,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldBeAbleToMergeExcludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.EXCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-1");
 
         merge(false, "x/y/z");
@@ -273,9 +271,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldNotBeAbleToPushToNotExcludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.EXCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(refChange.getRefId()).thenReturn("refs/heads/branch-3");
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
@@ -284,9 +283,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void nonAdminShouldNotBeNotAbleToMergeExcludedBranch() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("EXCLUDE");
-        when(settings.getString(eq("branchFilter"), anyString())).thenReturn("branch-1 branch-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.EXCLUDE);
+        when(settingsFactoryService.getBranchFilters((Settings)anyObject()))
+                .thenReturn(asList("branch-1", "branch-2"));
         when(pullRequestToRef.getId()).thenReturn("refs/heads/branch-3");
 
         merge(false, "x/y/z");
@@ -297,9 +297,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void excludedUserShouldBeAbleToPushRestrictedPaths() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
-        when(settings.getString(eq("excludedUsers"), anyString())).thenReturn("excluded-user-1 excluded-user-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.ALL);
+        when(settingsFactoryService.getExcludedUsers((Settings)anyObject()))
+                .thenReturn(asList("excluded-user-1", "excluded-user-2"));
         when(user.getName()).thenReturn("excluded-user-1");
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.TRUE));
@@ -308,9 +309,10 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void excludedUserShouldBeAbleToMergeRestrictedPaths() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z z/y/x");
-        when(settings.getString(eq("filterType"), anyString())).thenReturn("ALL");
-        when(settings.getString(eq("excludedUsers"), anyString())).thenReturn("excluded-user-1 excluded-user-2");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
+        when(settingsFactoryService.getFilterType((Settings)anyObject())).thenReturn(FilterType.ALL);
+        when(settingsFactoryService.getExcludedUsers((Settings)anyObject()))
+                .thenReturn(asList("excluded-user-1", "excluded-user-2"));
         when(user.getName()).thenReturn("excluded-user-1");
 
         merge(false, "x/y/z");
@@ -321,7 +323,7 @@ public class ProtectPathsRepositoryHookTest {
 
     @Test
     public void failedPushShouldContainErrorMessage() {
-        when(settings.getString(eq("pathPatterns"), anyString())).thenReturn("x/y/z");
+        when(settingsFactoryService.getPathPatterns((Settings)anyObject())).thenReturn(asList("x/y/z", "z/y/x"));
 
         assertThat(canPush(false, "x/y/z"), is(Boolean.FALSE));
         assertThat(hookResponseErr.toString().length() == 0, equalTo(Boolean.FALSE));
