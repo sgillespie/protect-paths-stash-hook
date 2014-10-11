@@ -127,7 +127,7 @@ public class ProtectPathsRepositoryHook implements PreReceiveRepositoryHook,
                 Page<Path> paths = detailedChangeset.getChanges().transform(CHANGE_TO_PATH);
                 for (Path path : paths.getValues()) {
                     for (String regexp : pathRegexps) {
-                        if (path.toString().toString().matches(regexp)) {
+                        if (path.toString().matches(regexp)) {
                             context.getMergeRequest().veto("Protected Paths!", getErrorMessages(toRef.getDisplayId()));
                         }
                     }
