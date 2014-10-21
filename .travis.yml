@@ -11,4 +11,4 @@ before_install:
   - sudo apt-get install apt-transport-https
   - sudo apt-get install atlassian-plugin-sdk
 install: atlas-mvn install -DskipTest=true
-script: atlas-unit-test
+script: atlas-mvn verify coveralls:report
