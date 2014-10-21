@@ -2,7 +2,6 @@ package com.github.sgillespie.hook;
 
 import com.atlassian.stash.commit.CommitService;
 import com.atlassian.stash.content.*;
-import com.atlassian.stash.repository.RefChange;
 import com.atlassian.stash.repository.Repository;
 import com.atlassian.stash.setting.Settings;
 import com.atlassian.stash.user.Permission;
@@ -15,15 +14,10 @@ import com.atlassian.stash.util.PageRequestImpl;
 import com.google.common.base.Function;
 
 import javax.annotation.Nullable;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created by sgillespie on 10/14/14.
- */
 public class ProtectPathsChangesetServiceImpl implements ProtectPathsChangesetService {
     public static final PageRequest PAGE_REQUEST = new PageRequestImpl(0, PageRequest.MAX_PAGE_LIMIT);
 
@@ -59,16 +53,16 @@ public class ProtectPathsChangesetServiceImpl implements ProtectPathsChangesetSe
 
     @Override
     public List<String> validateChangesets(Repository repository, Settings settings, String refId, String fromHash, String toHash) {
-        List<String> errors = new ArrayList<String>();
+        List<String> errors = new ArrayList<>();
 
         // Admins and excluded users
         if (shouldExcludeUser(settings, repository, stashAuthenticationContext.getCurrentUser()))
-            return new ArrayList<String>();
+            return new ArrayList<>();
 
         // Get protected paths
         List<String> pathRegexps = settingsFactoryService.getPathPatterns(settings);
 
-        if (!shouldIncludeBranch(settings, refId)) return new ArrayList<String>();
+        if (!shouldIncludeBranch(settings, refId)) return new ArrayList<>();
 
         Page<DetailedChangeset> detailedChangesets = findDetailedChangeSets(
                 repository, fromHash, toHash);
@@ -85,10 +79,6 @@ public class ProtectPathsChangesetServiceImpl implements ProtectPathsChangesetSe
         }
 
         return errors;
-    }
-
-    private boolean isRepoAdmin(Repository repository) {
-        return permissionService.hasRepositoryPermission(repository, Permission.REPO_ADMIN);
     }
 
     /**

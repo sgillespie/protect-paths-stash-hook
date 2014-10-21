@@ -8,9 +8,6 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
-/**
- * Created by sgillespie on 10/10/14.
- */
 public class SettingsFactoryServiceImpl implements SettingsFactoryService {
     public static final String KEY_PATH_PATTERNS = "pathPatterns";
     public static final String KEY_FILTER_TYPE = "filterType";

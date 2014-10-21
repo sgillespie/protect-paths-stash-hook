@@ -11,14 +11,10 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by sgillespie on 10/10/14.
- */
 public class SettingsFactoryServiceImplTest {
     private SettingsFactoryService settingsFactoryServiceImpl;
 

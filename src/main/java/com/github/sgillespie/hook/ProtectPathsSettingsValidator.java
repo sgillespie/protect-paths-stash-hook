@@ -8,9 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 
-/**
- * Created by sgillespie on 9/27/14.
- */
 public class ProtectPathsSettingsValidator  implements RepositorySettingsValidator {
     @Override
     public void validate(@Nonnull Settings settings,

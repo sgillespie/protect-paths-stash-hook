@@ -11,18 +11,13 @@ import com.atlassian.stash.user.StashUser;
 import com.atlassian.stash.util.Page;
 import com.atlassian.stash.util.PageImpl;
 import com.atlassian.stash.util.PageRequest;
-import org.hamcrest.core.Is;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import java.util.List;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
-import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyObject;

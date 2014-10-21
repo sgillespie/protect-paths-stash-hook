@@ -6,7 +6,6 @@ import com.atlassian.stash.setting.SettingsValidationErrors;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import static org.mockito.Matchers.anyString;
@@ -14,9 +13,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by sgillespie on 9/27/14.
- */
 public class ProtectPathsSettingsValidatorTest {
     private ProtectPathsSettingsValidator validator;
     @Mock
