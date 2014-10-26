@@ -12,6 +12,9 @@
     <name>protect-paths-stash-hook</name>
     <description>A plugin for Atlassian Stash that protects paths from being pushed by non-administrators (for projects).</description>
     <packaging>atlassian-plugin</packaging>
+    <scm>
+        <developerConnection>scm:git:ssh://git@github.com:sgillespie/protect-paths-stash-hook.git</developerConnection>
+    </scm>
 
     <dependencyManagement>
         <dependencies>
