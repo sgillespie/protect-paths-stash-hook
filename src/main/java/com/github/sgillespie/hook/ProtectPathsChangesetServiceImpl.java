@@ -52,7 +52,8 @@ public class ProtectPathsChangesetServiceImpl implements ProtectPathsChangesetSe
     }
 
     @Override
-    public List<String> validateChangesets(Repository repository, Settings settings, String refId, String fromHash, String toHash) {
+    public List<String> validateChangesets(Repository repository, Settings settings, String refId, String fromHash,
+                                           String toHash) {
         List<String> errors = new ArrayList<>();
 
         // Admins and excluded users
@@ -64,15 +65,18 @@ public class ProtectPathsChangesetServiceImpl implements ProtectPathsChangesetSe
 
         if (!shouldIncludeBranch(settings, refId)) return new ArrayList<>();
 
-        Page<DetailedChangeset> detailedChangesets = findDetailedChangeSets(
-                repository, fromHash, toHash);
-        for (DetailedChangeset detailedChangeset : detailedChangesets.getValues()) {
-            // Validate the paths
-            Page<Path> paths = detailedChangeset.getChanges().transform(CHANGE_TO_PATH);
-            for (Path path : paths.getValues()) {
-                for (String regexp : pathRegexps) {
-                    if (path.toString().matches(regexp)) {
-                        errors.add(String.format("%s: XXX contains matches restricted path %s", refId, regexp));
+        Page<Changeset> changesets = findNewChangeSets(repository, fromHash, toHash);
+        for (Changeset changeset : changesets.getValues()) {
+            Page<DetailedChangeset> detailedChangesets = getDetailedChangesets(repository, changesets);
+            for (DetailedChangeset detailedChangeset : detailedChangesets.getValues()) {
+                // Validate the paths
+                Page<Path> paths = detailedChangeset.getChanges().transform(CHANGE_TO_PATH);
+                for (Path path : paths.getValues()) {
+                    for (String regexp : pathRegexps) {
+                        if (path.toString().matches(regexp)) {
+                            errors.add(String.format("%s: %s matches restricted path %s", refId,
+                                    changeset.getId(), regexp));
+                        }
                     }
                 }
             }

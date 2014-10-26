@@ -6,5 +6,9 @@ import com.atlassian.stash.setting.Settings;
 import java.util.List;
 
 public interface ProtectPathsChangesetService {
-    public List<String> validateChangesets(Repository repository, Settings settings, String refId, String fromHash, String toHash);
+    public List<String> validateChangesets(Repository repository,
+                                           Settings settings,
+                                           String refId,
+                                           String fromHash,
+                                           String toHash);
 }
