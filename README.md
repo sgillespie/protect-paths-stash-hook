@@ -1,3 +1,7 @@
+# WARNING WARNING WARNING
+This project is currently unmaintained, as I no longer have access to a BitBucket Server account. If you are interested,
+please consider taking this project over. You can contact me by opening an issue here or by emailing me at <sean@mistersg.net>
+
 # Protect Paths Hook
 [![Build Status](https://travis-ci.org/sgillespie/protect-paths-stash-hook.svg?branch=master)](https://travis-ci.org/sgillespie/protect-paths-stash-hook)
 [![Coverage Status](https://img.shields.io/coveralls/sgillespie/protect-paths-stash-hook.svg)](https://coveralls.io/r/sgillespie/protect-paths-stash-hook?branch=master)
